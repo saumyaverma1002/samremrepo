@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Launching EC2 Server"
+Parameters:
+  vpcrangeip:
+    Description: Enter Vpc Range
+    Type: String
+  publicsubnetrangeip:
+    Description: Enter public Subnet range
+    Type: String
+  privatesubnetrangeip:
+    Description: Enter private Subnet range
+    Type: String
+  destinationCIDR:
+    Description: Enter destinationCIDR IP e.g :0.0.0.0/0
+    Type: String
+Resources:
+  vpcrangeID:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref vpcrangeip
+      Tags:
+      - Key: Name
+        Value: SaumyaVPC
+  publicsubnetrangeID:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: !Ref publicsubnetrangeip
+      AvailabilityZone: ap-south-1a
+      VpcId: !Ref vpcrangeID
+    DependsOn: vpcrangeID
+  privatesubnetrangeID:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: !Ref privatesubnetrangeip
+      AvailabilityZone: ap-south-1a
+      VpcId: !Ref vpcrangeID
+    DependsOn: vpcrangeID
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: IGWSaumya
+  myIGWattachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties: 
+      InternetGatewayId: !Ref myInternetGateway 
+      VpcId: !Ref vpcrangeID
+  myPublicRoutetable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref vpcrangeID
+      Tags:
+      - Key: Name
+        Value: SaumyaPublicRouteTable
+  myPrivateRoutetable:
+    Type: "AWS::EC2::RouteTable"
+    Properties: 
+      VpcId: !Ref vpcrangeID
+      Tags:
+      - Key: Name
+        Value: SaumyaPrivateRouteTable
+  mypublicroute:
+    Type: "AWS::EC2::Route"
+    DependsOn: myInternetGateway
+    Properties:
+      RouteTableId: !Ref myPublicRoutetable
+      DestinationCidrBlock: !Ref destinationCIDR
+      GatewayId: !Ref myInternetGateway 
+  publicsubnetassociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      RouteTableId: !Ref myPublicRoutetable
+      SubnetId: !Ref publicsubnetrangeID
+  privatesubnetassociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref myPrivateRoutetable
+      SubnetId: !Ref privatesubnetrangeID
+
